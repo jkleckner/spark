@@ -56,19 +56,19 @@ if [[ ! "$@" =~ --package-only ]]; then
   mvn -Pyarn release:clean
 
   mvn -DskipTests \
-    -Darguments="-DskipTests=true -Dmaven.javadoc.skip=true -Dhadoop.version=2.2.0 -Dyarn.version=2.2.0 -Dgpg.passphrase=${GPG_PASSPHRASE}" \
+    -Darguments="-DskipTests=true -Dmaven.javadoc.skip=true -Dhadoop.version=2.4.0 -Dyarn.version=2.4.0 -Dgpg.passphrase=${GPG_PASSPHRASE}" \
     -Dusername=$GIT_USERNAME -Dpassword=$GIT_PASSWORD \
     -Dmaven.javadoc.skip=true \
-    -Dhadoop.version=2.2.0 -Dyarn.version=2.2.0 \
+    -Dhadoop.version=2.4.0 -Dyarn.version=2.4.0 \
     -Dtag=$GIT_TAG -DautoVersionSubmodules=true \
-    -Pyarn -Phive -Phadoop-2.2 -Pspark-ganglia-lgpl -Pkinesis-asl \
+    -Pyarn -Phive -Phadoop-2.4 -Pspark-ganglia-lgpl -Pkinesis-asl \
     --batch-mode release:prepare
 
   mvn -DskipTests \
-    -Darguments="-DskipTests=true -Dmaven.javadoc.skip=true -Dhadoop.version=2.2.0 -Dyarn.version=2.2.0 -Dgpg.passphrase=${GPG_PASSPHRASE}" \
-    -Dhadoop.version=2.2.0 -Dyarn.version=2.2.0 \
+    -Darguments="-DskipTests=true -Dmaven.javadoc.skip=true -Dhadoop.version=2.4.0 -Dyarn.version=2.4.0 -Dgpg.passphrase=${GPG_PASSPHRASE}" \
+    -Dhadoop.version=2.4.0 -Dyarn.version=2.4.0 \
     -Dmaven.javadoc.skip=true \
-    -Pyarn -Phive -Phadoop-2.2 -Pspark-ganglia-lgpl -Pkinesis-asl \
+    -Pyarn -Phive -Phadoop-2.4 -Pspark-ganglia-lgpl -Pkinesis-asl \
     release:perform
 
   cd ..
