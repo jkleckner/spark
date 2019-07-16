@@ -41,9 +41,9 @@ hadoopMajorVersion="2.7"
 #
 # ./dev/change-scala-version.sh 2.11
 
-dateStamp=$(date +"%Y%m%d")
-gitHash=$(git rev-parse --short HEAD)
-tagStamp=$dateStamp-$gitHash
+# dateStamp=$(date +"%Y%m%d")
+# gitHash=$(git rev-parse --short HEAD)
+tagStamp=$(git describe --dirty)
 
 
 if [[ 1 == 1 ]] ; then
@@ -53,13 +53,13 @@ if [[ 1 == 1 ]] ; then
 
   time ( bin/docker-image-tool.sh -r registry.cphy.com/cphy -t "$tagStamp" build )
 
-  time ( docker tag   registry.cphy.com/cphy/spark:$tagStamp registry.cphy.com/cphy/spark:latest )
+# time ( docker tag   registry.cphy.com/cphy/spark:$tagStamp registry.cphy.com/cphy/spark:latest )
   time ( docker tag   registry.cphy.com/cphy/spark:$tagStamp registry.cphy.com/cphy/spark/spark:$tagStamp )
-  time ( docker tag   registry.cphy.com/cphy/spark-py:$tagStamp registry.cphy.com/cphy/spark/spark-py:latest )
+# time ( docker tag   registry.cphy.com/cphy/spark-py:$tagStamp registry.cphy.com/cphy/spark/spark-py:latest )
   time ( docker tag   registry.cphy.com/cphy/spark-py:$tagStamp registry.cphy.com/cphy/spark/spark-py:$tagStamp )
-  time ( docker push  registry.cphy.com/cphy/spark:latest )
+# time ( docker push  registry.cphy.com/cphy/spark:latest )
   time ( docker push  registry.cphy.com/cphy/spark:$tagStamp )
-  time ( docker push  registry.cphy.com/cphy/spark/spark-py:latest )
+# time ( docker push  registry.cphy.com/cphy/spark/spark-py:latest )
   time ( docker push  registry.cphy.com/cphy/spark/spark-py:$tagStamp )
 
 fi
