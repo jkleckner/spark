@@ -1,0 +1,80 @@
+#!/bin/bash
+
+
+# time sbt -Dsbt.log.format=false ';clean;update;compile;assembly;evicted;eclipse with-source=true skip-parents=false; dependencyUpdates; dependencyTree'
+
+# see instructions at: http://spark.apache.org/docs/latest/building-spark.html
+# f5473c2 - (HEAD, upstream/master, master) [SPARK-6014] [CORE] [HOTFIX] Add try-catch block around ShutDownHook (74 minutes ago) <Nishkam Ravi>
+
+
+# http://spark.apache.org/docs/latest/running-on-kubernetes.html
+
+#
+# To inspect the file in the image:
+# docker run --entrypoint=/bin/bash  -i -t --rm  registry.cphy.com/spark:testing
+
+# docker push registry.cphy.com/jim-playpen/spark:latest
+
+# /opt/spark/examples/target/scala-2.11/jars/spark-examples_2.11-2.3.2-SNAPSHOT.jar
+
+# kubectl run -i -t --restart=Never --rm=true \
+#  spark-pi \
+#  --image=registry.cphy.com/jim-playpen/spark:latest \
+#  --overrides='{ "apiVersion": "v1", "spec": { "imagePullSecrets": [{"name": "jim-gitlab-registry-readonly-2018-09-30"}] } }' \
+#  /bin/bash
+
+
+# spark.history.fs.logDirectory=s3://foo
+
+
+
+set -x
+
+# scalaVersion=
+# scalaVersion="-Dscala-2.11"
+# hadoopVersion="2.4.1"
+# hadoopMajorVersion="2.4"
+# hadoopVersion="2.7.2"
+hadoopMajorVersion="2.7"
+
+# see instructions at: http://spark.apache.org/docs/latest/building-spark.html
+#
+# ./dev/change-scala-version.sh 2.11
+
+dateStamp=$(date +"%Y%m%d")
+gitHash=$(git rev-parse --short HEAD)
+tagStamp=$dateStamp-$gitHash
+
+
+if [[ 1 == 1 ]] ; then
+#  time ( build/mvn -Pyarn -Phadoop-$hadoopMajorVersion -Phive -Phive-thriftserver -Phadoop-cloud -DskipTests clean generate-sources compile test-compile package )
+  time ( build/mvn -Pyarn -Phadoop-$hadoopMajorVersion -Phive -Phive-thriftserver -Phadoop-cloud -DskipTests package )
+# time ( build/mvn -Pyarn -Phadoop-$hadoopMajorVersion -Phive -Phive-thriftserver -DskipTests package )
+
+  time ( bin/docker-image-tool.sh -r registry.cphy.com/cphy -t "$tagStamp" build )
+
+  time ( docker tag   registry.cphy.com/cphy/spark:$tagStamp registry.cphy.com/cphy/spark:latest )
+  time ( docker tag   registry.cphy.com/cphy/spark:$tagStamp registry.cphy.com/cphy/spark/spark:$tagStamp )
+  time ( docker tag   registry.cphy.com/cphy/spark-py:$tagStamp registry.cphy.com/cphy/spark/spark-py:latest )
+  time ( docker tag   registry.cphy.com/cphy/spark-py:$tagStamp registry.cphy.com/cphy/spark/spark-py:$tagStamp )
+  time ( docker push  registry.cphy.com/cphy/spark:latest )
+  time ( docker push  registry.cphy.com/cphy/spark:$tagStamp )
+  time ( docker push  registry.cphy.com/cphy/spark/spark-py:latest )
+  time ( docker push  registry.cphy.com/cphy/spark/spark-py:$tagStamp )
+
+fi
+####
+# docker run --entrypoint=/bin/bash  -i -t --rm  registry.cphy.com/spark
+
+
+# docker image tag registry.cphy.com/jim-playpen/spark-r:20190319-dc990cb920           registry.cphy.com/cphy/spark-r:20190319-dc990cb920          
+# docker image tag registry.cphy.com/jim-playpen/spark-py:20190319-dc990cb920          registry.cphy.com/cphy/spark-py:20190319-dc990cb920         
+# docker image tag registry.cphy.com/jim-playpen/spark/spark-py:20190319-dc990cb920    registry.cphy.com/cphy/spark/spark-py:20190319-dc990cb920   
+# docker image tag registry.cphy.com/jim-playpen/spark/spark-py:latest                 registry.cphy.com/cphy/spark/spark-py:latest                
+# docker image tag registry.cphy.com/jim-playpen/spark:20190319-dc990cb920             registry.cphy.com/cphy/spark:20190319-dc990cb920            
+# docker image tag registry.cphy.com/jim-playpen/spark:latest                          registry.cphy.com/cphy/spark:latest                         
+
+# time ( docker push  registry.cphy.com/cphy/spark:latest )
+# time ( docker push  registry.cphy.com/cphy/spark:20190319-dc990cb920 )
+# time ( docker push  registry.cphy.com/cphy/spark/spark-py:latest )
+# time ( docker push  registry.cphy.com/cphy/spark/spark-py:20190319-dc990cb920 )
