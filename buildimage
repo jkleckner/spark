@@ -48,8 +48,9 @@ tagStamp=$(git describe --dirty)
 
 if [[ 1 == 1 ]] ; then
 #  time ( build/mvn -Pyarn -Phadoop-$hadoopMajorVersion -Phive -Phive-thriftserver -Phadoop-cloud -DskipTests clean generate-sources compile test-compile package )
-  time ( build/mvn -Pyarn -Phadoop-$hadoopMajorVersion -Phive -Phive-thriftserver -Phadoop-cloud -DskipTests package )
+# time ( build/mvn -Pyarn -Phadoop-$hadoopMajorVersion -Phive -Phive-thriftserver -Phadoop-cloud -DskipTests package )
 # time ( build/mvn -Pyarn -Phadoop-$hadoopMajorVersion -Phive -Phive-thriftserver -DskipTests package )
+  time ( build/mvn -Pkubernetes -DskipTests package )
 
   time ( bin/docker-image-tool.sh -r registry.cphy.com/cphy -t "$tagStamp" build )
 
