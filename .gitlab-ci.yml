@@ -1,0 +1,43 @@
+stages:
+- build
+
+variables:
+  CI_APPLICATION_REPOSITORY: $CI_REGISTRY_IMAGE
+  CI_APPLICATION_TAG: $CI_COMMIT_SHA
+
+build:
+  stage: build
+  image: maven:3-jdk-8
+  services:
+    - docker:dind
+  cache:
+    key: build-cache
+    paths:
+      - /root/.m2
+  before_script:
+    # See: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-debian-9
+    - cat /etc/hosts
+    - apt update
+    - apt-get --yes --quiet install apt-transport-https ca-certificates curl gnupg2 software-properties-common
+    - curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+    - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+    - apt update
+    - apt-cache policy docker-ce-cli
+    - apt-get install --yes --quiet docker-ce-cli
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+  script:
+    - >
+      set -x;
+      tagStamp=$(git describe --dirty);
+      time ( build/mvn -Pkubernetes -DskipTests package );
+      time ( bin/docker-image-tool.sh -r ${CI_REGISTRY_IMAGE} -t "$tagStamp" build);
+      time ( bin/docker-image-tool.sh -r ${CI_REGISTRY_IMAGE} -t "$tagStamp" push);
+      docker images;
+      docker tag  ${CI_REGISTRY_IMAGE}/spark:$tagStamp ${CI_REGISTRY_IMAGE}/spark:latest;
+      docker tag  ${CI_REGISTRY_IMAGE}/spark-py:$tagStamp ${CI_REGISTRY_IMAGE}/spark-py:latest;
+      docker tag  ${CI_REGISTRY_IMAGE}/spark-r:$tagStamp ${CI_REGISTRY_IMAGE}/spark-r:latest;
+      docker push ${CI_REGISTRY_IMAGE}/spark:latest;
+      docker push ${CI_REGISTRY_IMAGE}/spark-py:latest;
+      docker push  ${CI_REGISTRY_IMAGE}/spark-r:latest;
