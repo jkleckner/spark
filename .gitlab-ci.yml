@@ -31,7 +31,7 @@ build:
     - >
       set -x;
       tagStamp=$(git describe --dirty);
-      time ( build/mvn -Pkubernetes -DskipTests package );
+      time ( dev/make-distribution.sh -Pkubernetes -DskipTests );
       time ( bin/docker-image-tool.sh -r ${CI_REGISTRY_IMAGE} -t "$tagStamp" build);
       time ( bin/docker-image-tool.sh -r ${CI_REGISTRY_IMAGE} -t "$tagStamp" push);
       docker images;
