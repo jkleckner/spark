@@ -23,6 +23,7 @@ import scala.collection.JavaConverters._
 import io.fabric8.kubernetes.api.model.{ContainerStateRunning, ContainerStateTerminated, ContainerStateWaiting, ContainerStatus, Pod}
 import io.fabric8.kubernetes.client.{KubernetesClientException, Watcher}
 import io.fabric8.kubernetes.client.Watcher.Action
+import java.net.HttpURLConnection.HTTP_GONE
 
 import org.apache.spark.SparkException
 import org.apache.spark.internal.Logging
@@ -79,7 +80,11 @@ private[k8s] class LoggingPodStatusWatcherImpl(
 
   override def onClose(e: KubernetesClientException): Unit = {
     logDebug(s"Stopping watching application $appId with last-observed phase $phase")
-    closeWatch()
+    if (e.getCode == HTTP_GONE) {
+      logDebug("Got HTTP Gone code, resource version changed in k8s api")
+    } else {
+      closeWatch()
+    }
   }
 
   private def logShortStatus() = {
