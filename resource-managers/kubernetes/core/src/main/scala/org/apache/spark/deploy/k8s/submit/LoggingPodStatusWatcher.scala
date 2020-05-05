@@ -31,6 +31,8 @@ import org.apache.spark.util.ThreadUtils
 
 private[k8s] trait LoggingPodStatusWatcher extends Watcher[Pod] {
   def awaitCompletion(): Unit
+  def watchOrStop(submissionId: String): Boolean
+  def reset(): Unit
 }
 
 /**
@@ -54,6 +56,8 @@ private[k8s] class LoggingPodStatusWatcherImpl(
     override def run() = logShortStatus()
   }
 
+  private var resourceToOldReceived = false
+
   private var pod = Option.empty[Pod]
 
   private def phase: String = pod.map(_.getStatus.getPhase).getOrElse("unknown")
@@ -63,6 +67,9 @@ private[k8s] class LoggingPodStatusWatcherImpl(
       scheduler.scheduleAtFixedRate(logRunnable, 0, interval, TimeUnit.MILLISECONDS)
     }
   }
+  override def reset(): Unit = {
+    resourceToOldReceived = false
+  }
 
   override def eventReceived(action: Action, pod: Pod): Unit = {
     this.pod = Option(pod)
@@ -70,7 +77,8 @@ private[k8s] class LoggingPodStatusWatcherImpl(
       case Action.DELETED | Action.ERROR =>
         closeWatch()
 
-      case _ =>
+      case a =>
+        logTrace(s"Received action: $a")
         logLongStatus()
         if (hasCompleted()) {
           closeWatch()
@@ -80,8 +88,9 @@ private[k8s] class LoggingPodStatusWatcherImpl(
 
   override def onClose(e: KubernetesClientException): Unit = {
     logDebug(s"Stopping watching application $appId with last-observed phase $phase")
-    if (e.getCode == HTTP_GONE) {
-      logDebug("Got HTTP Gone code, resource version changed in k8s api")
+    if(e != null && e.getCode == HTTP_GONE) {
+      resourceToOldReceived = true
+      logDebug(s"Got HTTP Gone code, resource version changed in k8s api: $e")
     } else {
       closeWatch()
     }
@@ -181,5 +190,27 @@ private[k8s] class LoggingPodStatusWatcherImpl(
 
   private def formatTime(time: String): String = {
     if (time != null ||  time != "") time else "N/A"
+  }
+  override def watchOrStop(sId: String): Boolean = if (conf.get(WAIT_FOR_APP_COMPLETION)) {
+    logInfo(s"Waiting for application ${conf.appName} with submission ID $sId to finish...")
+    val interval = conf.get(REPORT_INTERVAL)
+    synchronized {
+      while (!podCompleted && !resourceToOldReceived) {
+        wait(interval)
+        logInfo(s"Application status for $appId (phase: $phase)")
+      }
+    }
+
+    if(podCompleted) {
+      logInfo(
+        pod.map { p => s"Container final statuses:\n\n${containersDescription(p)}" }
+          .getOrElse("No containers were found in the driver pod."))
+      logInfo(s"Application ${conf.appName} with submission ID $sId finished")
+    }
+    podCompleted
+  } else {
+    logInfo(s"Deployed Spark application ${conf.appName} with submission ID $sId into Kubernetes")
+    // Always act like the application has completed since we don't want to wait for app completion
+    true
   }
 }
