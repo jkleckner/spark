@@ -30,7 +30,7 @@ build:
     - >
       set -x;
       tagStamp=$(git describe --tags --always --dirty);
-      time ( dev/make-distribution.sh --tgz --pip --r -Phadoop-2.7 -Pkubernetes );
+      time ( dev/make-distribution.sh --tgz --pip -Phadoop-2.7 -Pkubernetes );
       time ( cd ./dist ; bin/docker-image-tool.sh -r ${CI_REGISTRY_IMAGE} -t "$tagStamp" build);
       time ( cd ./dist ; bin/docker-image-tool.sh -r ${CI_REGISTRY_IMAGE} -t "$tagStamp" push);
       docker images;
