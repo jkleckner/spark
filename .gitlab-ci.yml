@@ -12,9 +12,10 @@ build:
   cache:
     key: build-cache
     paths:
-      - .m2
+      - .m2/
   before_script:
     # See: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-debian-9
+    # - mkdir $PWD/.m2 ; ln -s $PWD/.m2 $USER/.m2
     - cat /etc/hosts
     - apt update
     - apt-get --yes --quiet –-no-install-recommends install apt-transport-https ca-certificates curl gnupg2 software-properties-common python3-pip
@@ -34,3 +35,5 @@ build:
       time ( cd ./dist ; bin/docker-image-tool.sh -r ${CI_REGISTRY_IMAGE} -t "$tagStamp" build);
       time ( cd ./dist ; bin/docker-image-tool.sh -r ${CI_REGISTRY_IMAGE} -t "$tagStamp" push);
       docker images;
+      pwd ;
+      ls -la / /root /root/.m2 .  ;
