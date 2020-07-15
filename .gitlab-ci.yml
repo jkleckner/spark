@@ -17,7 +17,7 @@ build:
     # See: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-debian-9
     - cat /etc/hosts
     - apt update
-    - apt-get --yes --quiet install apt-transport-https ca-certificates curl gnupg2 software-properties-common python-pip
+    - apt-get --yes --quiet –-no-install-recommends install apt-transport-https ca-certificates curl gnupg2 software-properties-common python3-pip
     - curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
     - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
     - apt update
