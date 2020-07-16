@@ -18,7 +18,7 @@ build:
     # - mkdir $PWD/.m2 ; ln -s $PWD/.m2 $USER/.m2
     - cat /etc/hosts
     - apt update
-    - apt-get --yes --quiet –-no-install-recommends install apt-transport-https ca-certificates curl gnupg2 software-properties-common python3-pip
+    - apt-get install --no-install-recommends --yes --quiet apt-transport-https ca-certificates curl gnupg2 software-properties-common python3-pip python3-setuptools python-setuptools
     - curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
     - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
     - apt update
