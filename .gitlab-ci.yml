@@ -1,0 +1,42 @@
+stages:
+- build
+
+build:
+  stage: build
+  image: maven:3-jdk-8
+  variables:
+    GIT_DEPTH: 0
+    # See: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/1042
+    FF_NETWORK_PER_BUILD: "true"
+    # See: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-disabled
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: "tcp://docker:2375"
+  services:
+    - docker:19.03.12-dind
+  cache:
+    key: build-cache
+    paths:
+      - .m2
+  before_script:
+    # See: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-debian-9
+    - cat /etc/hosts
+    - apt update
+    - apt-get install --no-install-recommends --yes --quiet apt-transport-https ca-certificates curl gnupg2 software-properties-common python3-pip python3-setuptools python-setuptools
+    - curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+    - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+    - apt update
+    - apt-cache policy docker-ce-cli
+    - apt-get install --yes --quiet docker-ce-cli
+  script:
+    - cat /etc/hosts
+    - export CI_BUILD_NETWORK_ID="$HOSTNAME-job-$CI_JOB_ID-network"
+    - echo CI_BUILD_NETWORK_ID=${CI_BUILD_NETWORK_ID}
+    - docker network ls
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - >
+      set -x;
+      tagStamp=$(git describe --tags --always --dirty);
+      time ( dev/make-distribution.sh --tgz --pip -Phadoop-2.7 -Pkubernetes );
+      time ( cd ./dist ; bin/docker-image-tool.sh -r ${CI_REGISTRY_IMAGE} -t "$tagStamp" build);
+      time ( cd ./dist ; bin/docker-image-tool.sh -r ${CI_REGISTRY_IMAGE} -t "$tagStamp" push);
+      docker images;
